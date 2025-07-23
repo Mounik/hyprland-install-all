@@ -176,19 +176,37 @@ install_opentofu() {
     local temp_dir=$(mktemp -d)
     cd "$temp_dir"
     
-    # Télécharger le script officiel
-    if curl --proto '=https' --tlsv1.2 -fsSL https://get.opentofu.org/install-opentofu.sh -o install-opentofu.sh >> "$LOG" 2>&1; then
-        chmod +x install-opentofu.sh
+    # Télécharger le script officiel avec retry
+    local max_attempts=3
+    local attempt=1
+    local script_success=false
+    
+    while [ $attempt -le $max_attempts ] && [ "$script_success" = false ]; do
+        echo "${NOTE} Tentative $attempt/$max_attempts du script officiel..." | tee -a "$LOG"
         
-        # Exécuter l'installation en mode standalone (pas besoin de cosign)
-        if ./install-opentofu.sh --install-method standalone --skip-verify >> "$LOG" 2>&1; then
-            echo "${OK} OpenTofu installé via script officiel" | tee -a "$LOG"
-            cd - > /dev/null
-            rm -rf "$temp_dir"
-            return 0
+        if curl --connect-timeout 10 --max-time 30 --proto '=https' --tlsv1.2 -fsSL https://get.opentofu.org/install-opentofu.sh -o install-opentofu.sh >> "$LOG" 2>&1; then
+            chmod +x install-opentofu.sh
+            
+            # Exécuter l'installation en mode standalone
+            if timeout 120 ./install-opentofu.sh --install-method standalone --skip-verify >> "$LOG" 2>&1; then
+                echo "${OK} OpenTofu installé via script officiel" | tee -a "$LOG"
+                script_success=true
+                cd - > /dev/null
+                rm -rf "$temp_dir"
+                return 0
+            else
+                echo "${WARN} Échec de l'exécution du script (tentative $attempt)" | tee -a "$LOG"
+            fi
         else
-            echo "${WARN} Échec du script officiel, tentative méthode alternative..." | tee -a "$LOG"
+            echo "${WARN} Échec du téléchargement du script (tentative $attempt)" | tee -a "$LOG"
         fi
+        
+        ((attempt++))
+        [ $attempt -le $max_attempts ] && sleep 3
+    done
+    
+    if [ "$script_success" = false ]; then
+        echo "${WARN} Script officiel échoué après $max_attempts tentatives, utilisation des méthodes alternatives..." | tee -a "$LOG"
     fi
     
     # Méthode 2: Gestionnaires de paquets spécifiques (fallback)

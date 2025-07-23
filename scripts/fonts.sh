@@ -58,44 +58,77 @@ done
 install_nerd_fonts_manual() {
     echo "${NOTE} Installation manuelle des Nerd Fonts..." | tee -a "$LOG"
     
-    local fonts_dir="$HOME/.local/share/fonts"
+    local fonts_dir="$HOME/.local/share/fonts/nerd-fonts"
     mkdir -p "$fonts_dir"
     
-    # Liste des Nerd Fonts à télécharger
+    # Liste des Nerd Fonts essentielles à télécharger
     local nerd_fonts=(
         "JetBrainsMono"
-        "FiraCode"
+        "FiraCode" 
         "Hack"
-        "SourceCodePro"
+        "FontAwesome"
     )
     
     for font in "${nerd_fonts[@]}"; do
-        if [ ! -d "$fonts_dir/$font" ]; then
-            echo "${NOTE} Téléchargement de $font Nerd Font..." | tee -a "$LOG"
-            
-            # Créer le dossier pour la police
-            mkdir -p "$fonts_dir/$font"
-            
-            # URL de téléchargement
-            local download_url="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/${font}.zip"
-            
-            # Télécharger et extraire
-            cd "$fonts_dir/$font"
-            if wget -q "$download_url" -O "${font}.zip"; then
-                unzip -q "${font}.zip"
-                rm "${font}.zip"
-                echo "${OK} $font Nerd Font installé" | tee -a "$LOG"
-            else
-                echo "${WARN} Échec du téléchargement de $font" | tee -a "$LOG"
-            fi
-        else
+        local font_dir="$fonts_dir/$font"
+        
+        # Vérifier si la police est déjà installée
+        if fc-list | grep -i "$font" | grep -i "nerd" > /dev/null 2>&1; then
             echo "${OK} $font Nerd Font déjà installé" | tee -a "$LOG"
+            continue
+        fi
+        
+        echo "${NOTE} Installation de $font Nerd Font..." | tee -a "$LOG"
+        mkdir -p "$font_dir"
+        
+        # URL de téléchargement depuis GitHub releases
+        local download_url="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/${font}.zip"
+        local temp_file="/tmp/${font}-nerd.zip"
+        
+        # Télécharger avec retry et timeout
+        local max_attempts=3
+        local attempt=1
+        
+        while [ $attempt -le $max_attempts ]; do
+            echo "${NOTE} Tentative $attempt/$max_attempts pour $font..." | tee -a "$LOG"
+            
+            if wget --timeout=30 --tries=2 -q "$download_url" -O "$temp_file" >> "$LOG" 2>&1; then
+                # Extraire dans le dossier de la police
+                cd "$font_dir"
+                if unzip -q "$temp_file" >> "$LOG" 2>&1; then
+                    # Supprimer les fichiers non-nécessaires
+                    find . -name "*.txt" -o -name "*.md" | xargs rm -f 2>/dev/null
+                    rm -f "$temp_file"
+                    echo "${OK} $font Nerd Font installé avec succès" | tee -a "$LOG"
+                    break
+                else
+                    echo "${WARN} Échec de l'extraction de $font (tentative $attempt)" | tee -a "$LOG"
+                fi
+            else
+                echo "${WARN} Échec du téléchargement de $font (tentative $attempt)" | tee -a "$LOG"
+            fi
+            
+            rm -f "$temp_file"
+            ((attempt++))
+            
+            if [ $attempt -le $max_attempts ]; then
+                sleep 2
+            fi
+        done
+        
+        if [ $attempt -gt $max_attempts ]; then
+            echo "${ERROR} Impossible d'installer $font après $max_attempts tentatives" | tee -a "$LOG"
         fi
     done
     
     # Mettre à jour le cache des polices
+    echo "${NOTE} Mise à jour du cache des polices..." | tee -a "$LOG"
     fc-cache -fv >> "$LOG" 2>&1
-    echo "${OK} Cache des polices mis à jour" | tee -a "$LOG"
+    
+    # Forcer la reconnaissance des nouvelles polices
+    fc-cache -f >> "$LOG" 2>&1
+    
+    echo "${OK} Installation manuelle des Nerd Fonts terminée" | tee -a "$LOG"
 }
 
 # Vérifier si les Nerd Fonts sont installées

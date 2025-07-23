@@ -24,15 +24,19 @@ case $DISTRO_FAMILY in
         fi
         ;;
     "debian")
-        # Hyprland n'est pas encore dans les dépôts officiels Debian/Ubuntu
-        # On va le compiler depuis les sources
+        # Pour Ubuntu/Debian, essayer d'abord les PPA puis compilation
         hyprland_packages=(
-            "sway"  # Fallback temporaire
             "xdg-desktop-portal-wlr"
             "polkit-kde-agent-1"
             "qtwayland5"
         )
-        COMPILE_HYPRLAND=true
+        
+        # Tenter l'installation via PPA pour Ubuntu
+        if [[ "$DISTRO_ID" == "ubuntu" ]]; then
+            setup_hyprland_ppa_ubuntu
+        else
+            COMPILE_HYPRLAND=true
+        fi
         ;;
     "redhat")
         hyprland_packages=(
@@ -66,13 +70,23 @@ case $DISTRO_FAMILY in
         wayland_deps+=("wayland" "wayland-utils" "wlroots")
         ;;
     "debian")
-        wayland_deps+=("wayland-protocols" "libwayland-dev" "libwlroots-dev")
+        wayland_deps=("wayland-protocols" "libwayland-dev")
+        # wlroots n'est pas disponible dans les repos Ubuntu/Debian standards
+        # Il sera compilé avec Hyprland si nécessaire
         ;;
     "redhat")
-        wayland_deps+=("wayland-devel" "wayland-utils" "wlroots-devel")
+        wayland_deps+=("wayland-devel" "wayland-utils")
+        # Tentative d'installation de wlroots, sinon compilation
+        if ! install_package "wlroots-devel"; then
+            echo "${WARN} wlroots-devel non disponible, compilation requise" | tee -a "$LOG"
+        fi
         ;;
     "suse")
-        wayland_deps+=("wayland-devel" "wayland-utils" "wlroots-devel")
+        wayland_deps+=("wayland-devel" "wayland-utils")
+        # Tentative d'installation de wlroots, sinon compilation
+        if ! install_package "wlroots-devel"; then
+            echo "${WARN} wlroots-devel non disponible, compilation requise" | tee -a "$LOG"
+        fi
         ;;
 esac
 
@@ -198,6 +212,99 @@ EOF
     # Nettoyer
     cd - > /dev/null
     rm -rf "$build_dir"
+}
+
+# Configuration PPA pour Ubuntu
+setup_hyprland_ppa_ubuntu() {
+    echo "${NOTE} Configuration du PPA Hyprland pour Ubuntu..." | tee -a "$LOG"
+    
+    # Vérifier la version Ubuntu
+    local ubuntu_version=$(lsb_release -rs 2>/dev/null || echo "unknown")
+    
+    if [[ "$ubuntu_version" == "unknown" ]]; then
+        echo "${WARN} Version Ubuntu inconnue, compilation requise" | tee -a "$LOG"
+        COMPILE_HYPRLAND=true
+        return 1
+    fi
+    
+    # Ubuntu 24.04+ a des paquets très récents dans les dépôts standard
+    if version_compare "$ubuntu_version" ">=" "24.04"; then
+        echo "${NOTE} Ubuntu $ubuntu_version détecté - version moderne avec paquets récents" | tee -a "$LOG"
+        
+        # Ubuntu 24.04+ devrait avoir Hyprland dans les dépôts universe
+        sudo apt-get update >> "$LOG" 2>&1
+        
+        # Activer universe si pas déjà fait
+        sudo add-apt-repository universe -y >> "$LOG" 2>&1
+        
+        # Tenter l'installation directe
+        if install_package "hyprland" && install_package "libwlroots-dev"; then
+            echo "${OK} Hyprland installé directement depuis les dépôts Ubuntu $ubuntu_version" | tee -a "$LOG"
+            return 0
+        else
+            echo "${NOTE} Hyprland pas encore disponible dans universe, compilation requise" | tee -a "$LOG"
+            COMPILE_HYPRLAND=true
+            return 1
+        fi
+        
+    # Ubuntu 22.04-23.10 : utiliser les backports
+    elif version_compare "$ubuntu_version" ">=" "22.04"; then
+        echo "${NOTE} Ubuntu $ubuntu_version détecté, tentative d'installation via backports..." | tee -a "$LOG"
+        
+        # Ajouter les backports si pas déjà présents
+        if ! grep -q "backports" /etc/apt/sources.list /etc/apt/sources.list.d/* 2>/dev/null; then
+            echo "deb http://archive.ubuntu.com/ubuntu $(lsb_release -cs)-backports main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list.d/backports.list >> "$LOG" 2>&1
+            sudo apt-get update >> "$LOG" 2>&1
+        fi
+        
+        # Tenter l'installation des dépendances récentes
+        if install_package "libwlroots-dev" && install_package "hyprland"; then
+            echo "${OK} Hyprland installé via backports Ubuntu" | tee -a "$LOG"
+            return 0
+        else
+            echo "${WARN} Installation via backports échouée, compilation requise" | tee -a "$LOG"
+            COMPILE_HYPRLAND=true
+            return 1
+        fi
+        
+    # Ubuntu < 22.04 : trop ancien, compilation obligatoire
+    else
+        echo "${WARN} Ubuntu $ubuntu_version trop ancien, compilation requise" | tee -a "$LOG"
+        COMPILE_HYPRLAND=true
+        return 1
+    fi
+}
+
+# Fonction utilitaire pour comparer les versions
+version_compare() {
+    local version1="$1"
+    local operator="$2"
+    local version2="$3"
+    
+    # Conversion simple pour comparaison
+    version1=$(echo "$version1" | sed 's/\.//g')
+    version2=$(echo "$version2" | sed 's/\.//g')
+    
+    case $operator in
+        ">=")
+            [[ $version1 -ge $version2 ]]
+            ;;
+        ">")
+            [[ $version1 -gt $version2 ]]
+            ;;
+        "<=")
+            [[ $version1 -le $version2 ]]
+            ;;
+        "<")
+            [[ $version1 -lt $version2 ]]
+            ;;
+        "==")
+            [[ $version1 -eq $version2 ]]
+            ;;
+        *)
+            return 1
+            ;;
+    esac
 }
 
 # Installer l'écosystème Hyprland
