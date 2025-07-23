@@ -37,10 +37,37 @@ fi
 
 # Créer le dossier de logs
 create_log_directory() {
-    if [ ! -d "Install-Logs" ]; then
-        mkdir -p Install-Logs
+    # Utiliser le répertoire du script comme base
+    local log_dir="${SCRIPT_DIR:-$(pwd)}/Install-Logs"
+    
+    if [ ! -d "$log_dir" ]; then
+        mkdir -p "$log_dir"
+        echo "Répertoire de logs créé: $log_dir"
     fi
-    LOG="Install-Logs/hyprland-universal-$(date +%d-%H%M%S).log"
+    
+    # Définir le fichier de log avec chemin absolu
+    LOG="$log_dir/hyprland-universal-$(date +%d-%H%M%S).log"
+    
+    # Créer le fichier de log et écrire l'en-tête
+    {
+        echo "=============================================="
+        echo "Hyprland Universal Installer - Log Session"
+        echo "Date: $(date)"
+        echo "Script: $0"
+        echo "Directory: $(pwd)"
+        echo "User: $(whoami)"
+        echo "=============================================="
+        echo ""
+    } > "$LOG"
+    
+    echo "Logging initialisé: $LOG"
+}
+
+# Fonction utilitaire pour s'assurer que LOG est défini
+ensure_log_exists() {
+    if [[ -z "$LOG" ]] || [[ ! -f "$LOG" ]]; then
+        create_log_directory
+    fi
 }
 
 # Fonction d'affichage de progression

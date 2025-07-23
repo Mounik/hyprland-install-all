@@ -21,9 +21,12 @@ source "$LIB_DIR/package-manager.sh"
 source "$LIB_DIR/package-mapping.sh"
 source "$LIB_DIR/user-interface.sh"
 
+# Initialiser le logging
+create_log_directory
+
 # Vérifications préliminaires
-echo "${INFO} Hyprland Universal Installer v${VERSION}"
-echo "${INFO} Détection de l'environnement..."
+echo "${INFO} Hyprland Universal Installer v${VERSION}" | tee -a "$LOG"
+echo "${INFO} Détection de l'environnement..." | tee -a "$LOG"
 
 # Vérifier que le script n'est pas exécuté en root
 if [[ $EUID -eq 0 ]]; then
@@ -33,7 +36,7 @@ fi
 
 # Détecter la distribution
 detect_distribution
-echo "${OK} Distribution détectée: ${DISTRO_NAME} ${DISTRO_VERSION}"
+echo "${OK} Distribution détectée: ${DISTRO_NAME} ${DISTRO_VERSION}" | tee -a "$LOG"
 
 # Initialiser le gestionnaire de paquets
 init_package_manager
@@ -45,7 +48,7 @@ check_prerequisites
 show_main_menu
 
 # Installation des composants sélectionnés
-echo "${NOTE} Début de l'installation..."
+echo "${NOTE} Début de l'installation..." | tee -a "$LOG"
 
 # Calculer le nombre total d'étapes
 TOTAL_STEPS=$(calculate_total_steps)

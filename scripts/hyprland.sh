@@ -231,11 +231,14 @@ setup_hyprland_ppa_ubuntu() {
     if version_compare "$ubuntu_version" ">=" "24.04"; then
         echo "${NOTE} Ubuntu $ubuntu_version détecté - version moderne avec paquets récents" | tee -a "$LOG"
         
-        # Ubuntu 24.04+ devrait avoir Hyprland dans les dépôts universe
-        sudo apt-get update >> "$LOG" 2>&1
-        
-        # Activer universe si pas déjà fait
+        # Activer universe et multiverse si pas déjà fait (sans prompts)
+        echo "${NOTE} Activation des dépôts universe et multiverse..." | tee -a "$LOG"
         sudo add-apt-repository universe -y >> "$LOG" 2>&1
+        sudo add-apt-repository multiverse -y >> "$LOG" 2>&1
+        
+        # Mise à jour des dépôts
+        echo "${NOTE} Mise à jour des listes de paquets..." | tee -a "$LOG"
+        sudo apt-get update >> "$LOG" 2>&1
         
         # Tenter l'installation directe
         if install_package "hyprland" && install_package "libwlroots-dev"; then

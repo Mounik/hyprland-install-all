@@ -1,6 +1,9 @@
 #!/bin/bash
 # Installation des dépendances de base
 
+# S'assurer que le logging est initialisé
+ensure_log_exists
+
 echo "${NOTE} Installation des dépendances de base..." | tee -a "$LOG"
 
 # Définir les paquets de base selon la distribution
@@ -184,7 +187,7 @@ install_opentofu() {
     while [ $attempt -le $max_attempts ] && [ "$script_success" = false ]; do
         echo "${NOTE} Tentative $attempt/$max_attempts du script officiel..." | tee -a "$LOG"
         
-        if curl --connect-timeout 10 --max-time 30 --proto '=https' --tlsv1.2 -fsSL https://get.opentofu.org/install-opentofu.sh -o install-opentofu.sh >> "$LOG" 2>&1; then
+        if curl --connect-timeout 10 --max-time 30 --proto '=https' --tlsv1.2 -fsSL https://get.opentofu.org/install-opentofu.sh -o install-opentofu.sh 2>&1 | tee -a "$LOG"; then
             chmod +x install-opentofu.sh
             
             # Exécuter l'installation en mode standalone
@@ -223,11 +226,17 @@ install_opentofu() {
             # Snap pour Ubuntu/Debian si disponible
             if command -v snap &>/dev/null; then
                 echo "${NOTE} Installation via Snap..." | tee -a "$LOG"
-                sudo snap install --classic opentofu >> "$LOG" 2>&1
                 
-                # Créer un lien symbolique pour compatibilité
-                if [[ ! -f /usr/local/bin/tofu ]] && [[ -f /snap/bin/tofu ]]; then
-                    sudo ln -sf /snap/bin/tofu /usr/local/bin/tofu 2>/dev/null || true
+                # Vérifier la connexion au Snap Store
+                if snap find opentofu &>/dev/null; then
+                    sudo snap install --classic opentofu 2>&1 | tee -a "$LOG"
+                    
+                    # Créer un lien symbolique pour compatibilité
+                    if [[ ! -f /usr/local/bin/tofu ]] && [[ -f /snap/bin/tofu ]]; then
+                        sudo ln -sf /snap/bin/tofu /usr/local/bin/tofu 2>/dev/null || true
+                    fi
+                else
+                    echo "${WARN} Snap Store inaccessible, essai méthode alternative..." | tee -a "$LOG"
                 fi
             else
                 # Repository APT officiel

@@ -139,9 +139,10 @@ setup_opensuse_repos() {
 setup_debian_repos() {
     case $DISTRO_ID in
         "ubuntu")
-            # Activer universe et multiverse
-            sudo add-apt-repository universe >> "$LOG" 2>&1
-            sudo add-apt-repository multiverse >> "$LOG" 2>&1
+            # Activer universe et multiverse (sans prompts interactifs)
+            echo "${NOTE} Activation des dépôts universe et multiverse..." | tee -a "$LOG"
+            sudo add-apt-repository universe -y >> "$LOG" 2>&1
+            sudo add-apt-repository multiverse -y >> "$LOG" 2>&1
             ;;
         "debian")
             # Vérifier les sources contrib et non-free
