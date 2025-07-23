@@ -1,0 +1,278 @@
+# Hyprland Universal Installer - .gitignore
+
+# ===================================
+# Installation Logs & Runtime Files
+# ===================================
+
+# Installation logs (generated during installation)
+Install-Logs/
+install-logs/
+*.log
+
+# Temporary installation files
+.tmp/
+tmp/
+temp/
+
+# Lock files
+*.lock
+*.pid
+
+# ===================================
+# User Data & Backups
+# ===================================
+
+# User configuration backups
+backups/
+*.backup
+*.bak
+*.orig
+
+# User-specific configurations
+user-configs/
+personal-configs/
+
+# Downloaded packages and sources
+downloads/
+packages/
+sources/
+
+# ===================================
+# Docker & Testing
+# ===================================
+
+# Docker volumes and data
+docker-volumes/
+.docker/
+
+# Test results and artifacts
+test-results/
+docker-tests/results/
+*.test
+*.result
+
+# Docker Compose override files
+docker-compose.override.yml
+docker-compose.override.yaml
+
+# Container logs
+*.container.log
+
+# ===================================
+# Development Environment
+# ===================================
+
+# IDE and Editor files
+.vscode/settings.json
+.vscode/launch.json
+.vscode/tasks.json
+.vscode/.ropeproject
+.idea/
+*.swp
+*~
+.vim/
+*.sublime-*
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+.directory
+
+# ===================================
+# Build & Cache Files
+# ===================================
+
+# Cache directories
+.cache/
+cache/
+__pycache__/
+*.pyc
+*.pyo
+
+# Node modules (if any web interfaces added)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build artifacts
+build/
+dist/
+*.deb
+*.rpm
+*.pkg.tar.xz
+*.AppImage
+
+# ===================================
+# Security & Sensitive Data
+# ===================================
+
+# Private keys and certificates
+*.key
+*.pem
+*.crt
+*.cert
+*.p12
+*.pfx
+id_rsa*
+id_ed25519*
+
+# Environment files with secrets
+.env
+.env.local
+.env.production
+.env.staging
+secrets.txt
+passwords.txt
+
+# GPG keys
+*.gpg
+*.asc
+
+# ===================================
+# Distribution-Specific
+# ===================================
+
+# Arch Linux
+*.pkg
+*.src.tar.gz
+.SRCINFO
+.makepkg
+
+# Debian/Ubuntu
+*.deb
+debian/files
+debian/*.substvars
+debian/*.log
+
+# Fedora/RHEL
+*.rpm
+*.spec.backup
+rpmbuild/
+
+# OpenSUSE
+*.obs/
+
+# ===================================
+# Development Tools
+# ===================================
+
+# Git specific
+.git-credentials
+.gitconfig.local
+
+# SSH
+.ssh/
+known_hosts
+
+# Shell history
+.bash_history
+.zsh_history
+.fish_history
+
+# ===================================
+# User Customizations
+# ===================================
+
+# Local override scripts
+local-*.sh
+custom-*.sh
+override-*.sh
+
+# User-specific configurations
+my-*.conf
+local.conf
+personal.conf
+
+# Custom themes and modifications
+custom-themes/
+user-themes/
+personal-dotfiles/
+
+# ===================================
+# Claude Code / AI Generated
+# ===================================
+
+# Claude session data (if any)
+.claude-session/
+claude-*.json
+.claude/
+CLAUDE.md
+
+# AI generated temp files
+ai-temp/
+generated-temp/
+
+# ===================================
+# Debugging & Profiling
+# ===================================
+
+# Debug logs
+debug.log
+debug-*.log
+*.debug
+
+# Profiling data
+*.prof
+*.trace
+
+# Core dumps
+core
+core.*
+
+# ===================================
+# Miscellaneous
+# ===================================
+
+# Compressed files (usually temporary)
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.zip
+*.rar
+*.7z
+
+# Backup files
+*~
+*.backup
+*.old
+*.original
+
+# Temporary files
+*.tmp
+*.temp
+.temporary
+
+# Local documentation builds
+docs/_build/
+site/
+
+# Version control from other systems
+.svn/
+.hg/
+.bzr/
+
+# ===================================
+# Project-Specific Exclusions
+# ===================================
+
+# Keep essential structure files
+!.gitkeep
+!README.md
+!CLAUDE.md
+!LICENSE
+
+# Keep example configurations but ignore user modifications
+!configs/examples/
+configs/local/
+configs/user/
+
+# Keep Docker test templates but ignore runtime data
+!docker-tests/*/Dockerfile*
+docker-tests/*/data/
+docker-tests/*/logs/

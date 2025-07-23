@@ -1,0 +1,184 @@
+MIT License
+
+Copyright (c) 2025 Hyprland Universal Installer Contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+================================================================================
+
+THIRD PARTY LICENSES AND ACKNOWLEDGMENTS
+
+This project incorporates or is inspired by several open-source projects and 
+resources. We acknowledge and thank the following projects and their contributors:
+
+1. HYPRLAND
+   Repository: https://github.com/hyprwm/Hyprland
+   License: BSD 3-Clause License
+   Copyright: Hyprland Development Team
+   
+   This project installs and configures Hyprland, which is licensed under the
+   BSD 3-Clause License. We are not affiliated with the Hyprland project.
+
+2. DRACULA THEME
+   Repository: https://github.com/dracula/dracula-theme
+   License: MIT License
+   Copyright: Dracula Theme Organization
+   
+   This project applies the Dracula color scheme across various applications.
+   All Dracula theme configurations are used under the MIT License.
+
+3. LAZYGIT
+   Repository: https://github.com/jesseduffield/lazygit
+   License: MIT License
+   Copyright: Jesse Duffield
+   
+   LazyGit is installed as part of the development environment setup.
+
+4. LAZYDOCKER
+   Repository: https://github.com/jesseduffield/lazydocker
+   License: MIT License
+   Copyright: Jesse Duffield
+   
+   LazyDocker is installed as part of the development environment setup.
+
+5. NEOVIM & LAZYVIM
+   Neovim Repository: https://github.com/neovim/neovim
+   LazyVim Repository: https://github.com/LazyVim/LazyVim
+   License: Apache License 2.0 (Neovim), Apache License 2.0 (LazyVim)
+   
+   This project configures Neovim with LazyVim for the development environment.
+
+6. ALACRITTY
+   Repository: https://github.com/alacritty/alacritty
+   License: Apache License 2.0
+   Copyright: Alacritty Contributors
+   
+   Alacritty terminal emulator is configured with Dracula theme.
+
+7. WAYBAR
+   Repository: https://github.com/Alexays/Waybar
+   License: MIT License
+   Copyright: Alexis Rouillard
+   
+   Waybar is configured as the status bar for Hyprland.
+
+8. UV (Python Package Manager)
+   Repository: https://github.com/astral-sh/uv
+   License: MIT License or Apache License 2.0
+   Copyright: Astral Software Inc.
+   
+   UV is installed as the modern Python package manager.
+
+9. OPENTOFU
+   Repository: https://github.com/opentofu/opentofu
+   License: Mozilla Public License 2.0
+   Copyright: OpenTofu Community
+   
+   OpenTofu is installed as the open-source Terraform alternative.
+
+10. DOCKER
+    Website: https://www.docker.com/
+    The project includes Docker-based testing but does not modify Docker itself.
+    Docker usage is subject to Docker's terms of service.
+
+11. VARIOUS LINUX DISTRIBUTIONS
+    This project supports and has been tested on:
+    - Ubuntu (Canonical Ltd.)
+    - Debian (Debian Project)
+    - Arch Linux (Arch Linux Community)
+    - Fedora (Red Hat, Inc.)
+    - openSUSE (SUSE LLC)
+    
+    All distribution-specific code respects the respective distribution's
+    packaging guidelines and policies.
+
+================================================================================
+
+DISTRIBUTION-SPECIFIC ACKNOWLEDGMENTS
+
+ARCH LINUX:
+- Uses AUR (Arch User Repository) packages
+- Incorporates yay AUR helper
+- Follows Arch packaging standards
+
+UBUNTU/DEBIAN:
+- Uses official repositories and approved PPAs
+- Follows Debian policy guidelines
+- Respects Ubuntu's package management conventions
+
+FEDORA:
+- Uses official repositories and approved COPR repositories
+- Follows Fedora packaging guidelines
+- Incorporates RPM Fusion repositories where appropriate
+
+OPENSUSE:
+- Uses official repositories and Packman repository
+- Follows openSUSE Build Service conventions
+- Respects SUSE packaging standards
+
+================================================================================
+
+FONTS AND ASSETS
+
+JETBRAINS MONO NERD FONT:
+- Original JetBrains Mono: Apache License 2.0 (JetBrains)
+- Nerd Fonts patches: MIT License (Nerd Fonts Community)
+- Repository: https://github.com/ryanoasis/nerd-fonts
+
+ICON THEMES AND ASSETS:
+Various icon themes and graphical assets may be installed. Each maintains
+its original license. Users should refer to individual asset licenses.
+
+================================================================================
+
+DISCLAIMER
+
+This project is a community-driven installation script and is not officially
+endorsed by or affiliated with:
+- The Hyprland project
+- Any Linux distribution mentioned
+- Any of the software projects that are installed by this script
+
+The installation script modifies system configurations and installs software.
+Users should review the script and understand the changes before execution.
+The authors are not responsible for any system damage or data loss.
+
+Use at your own risk. Always backup your system before running installation
+scripts.
+
+================================================================================
+
+CONTRIBUTION
+
+By contributing to this project, you agree that your contributions will be
+licensed under the same MIT License that covers the project. Contributors
+retain copyright over their contributions while granting the project rights
+to use, modify, and distribute their contributions under the MIT License.
+
+All contributors are acknowledged in the project documentation and commit
+history. Major contributors may be listed in a separate CONTRIBUTORS file.
+
+================================================================================
+
+CONTACT
+
+For licensing questions or concerns, please open an issue at:
+https://github.com/Mounik/hyprland-install-all/issues
+
+Last updated: July 2025

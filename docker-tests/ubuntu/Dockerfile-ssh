@@ -1,0 +1,70 @@
+# Dockerfile Ubuntu avec SSH pour tests interactifs
+FROM ubuntu:22.04
+
+# Éviter les interactions pendant l'installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Mettre à jour le système et installer les outils de base + SSH
+RUN apt update && apt upgrade -y && \
+    apt install -y \
+    build-essential \
+    git \
+    wget \
+    curl \
+    sudo \
+    software-properties-common \
+    apt-transport-https \
+    ca-certificates \
+    gpg \
+    lsb-release \
+    nano \
+    vim \
+    openssh-server \
+    systemd \
+    systemd-sysv
+
+# Configurer SSH
+RUN mkdir /var/run/sshd && \
+    echo 'root:rootpass' | chpasswd && \
+    sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
+    sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
+
+# Créer un utilisateur non-root avec accès SSH
+RUN useradd -m -G sudo -s /bin/bash testuser && \
+    echo "testuser:testpass" | chpasswd && \
+    echo "testuser ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+
+# Configurer les locales
+RUN apt install -y locales && \
+    locale-gen en_US.UTF-8
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US:en
+ENV LC_ALL=en_US.UTF-8
+
+# Copier le script d'installation dans le home de testuser
+WORKDIR /home/testuser
+COPY --chown=testuser:testuser . /home/testuser/hyprland-universal/
+
+# Rendre les scripts exécutables
+RUN chmod +x /home/testuser/hyprland-universal/install.sh && \
+    chmod +x /home/testuser/hyprland-universal/test-installation.sh && \
+    chmod +x /home/testuser/hyprland-universal/scripts/*.sh
+
+# Créer un script de démarrage
+RUN echo '#!/bin/bash' > /start.sh && \
+    echo 'service ssh start' >> /start.sh && \
+    echo 'echo "SSH démarré - connexion possible avec:"' >> /start.sh && \
+    echo 'echo "ssh testuser@localhost -p 2222 (mot de passe: testpass)"' >> /start.sh && \
+    echo 'echo "ou ssh root@localhost -p 2222 (mot de passe: rootpass)"' >> /start.sh && \
+    echo 'echo ""' >> /start.sh && \
+    echo 'echo "Scripts disponibles:"' >> /start.sh && \
+    echo 'echo "  cd /home/testuser/hyprland-universal"' >> /start.sh && \
+    echo 'echo "  ./test-installation.sh basic  # Tests de base"' >> /start.sh && \
+    echo 'echo "  ./install.sh                 # Installation complète"' >> /start.sh && \
+    echo 'echo ""' >> /start.sh && \
+    echo 'tail -f /dev/null' >> /start.sh && \
+    chmod +x /start.sh
+
+EXPOSE 22
+
+CMD ["/start.sh"]

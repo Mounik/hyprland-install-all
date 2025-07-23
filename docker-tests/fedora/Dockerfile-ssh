@@ -1,0 +1,58 @@
+# Dockerfile Fedora avec SSH pour tests interactifs
+FROM fedora:latest
+
+# Mettre à jour le système et installer les outils de base + SSH
+RUN dnf update -y && \
+    dnf install -y \
+    @development-tools \
+    git \
+    wget \
+    curl \
+    sudo \
+    which \
+    man-db \
+    nano \
+    vim \
+    openssh-server \
+    systemd \
+    ca-certificates \
+    dnf-plugins-core
+
+# Configurer SSH
+RUN mkdir -p /var/run/sshd && \
+    echo 'root:rootpass' | chpasswd && \
+    sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
+    sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config && \
+    ssh-keygen -A
+
+# Créer un utilisateur non-root
+RUN useradd -m -G wheel -s /bin/bash testuser && \
+    echo "testuser:testpass" | chpasswd && \
+    echo "testuser ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+
+# Copier le script d'installation dans le home de testuser
+COPY --chown=testuser:testuser . /home/testuser/hyprland-universal/
+
+# Rendre les scripts exécutables
+RUN chmod +x /home/testuser/hyprland-universal/install.sh && \
+    chmod +x /home/testuser/hyprland-universal/test-installation.sh && \
+    chmod +x /home/testuser/hyprland-universal/scripts/*.sh
+
+# Créer un script de démarrage
+RUN echo '#!/bin/bash' > /start.sh && \
+    echo '/usr/sbin/sshd -D &' >> /start.sh && \
+    echo 'echo "SSH démarré - connexion possible avec:"' >> /start.sh && \
+    echo 'echo "ssh testuser@localhost -p 2225 (mot de passe: testpass)"' >> /start.sh && \
+    echo 'echo "ou ssh root@localhost -p 2225 (mot de passe: rootpass)"' >> /start.sh && \
+    echo 'echo ""' >> /start.sh && \
+    echo 'echo "Scripts disponibles:"' >> /start.sh && \
+    echo 'echo "  cd /home/testuser/hyprland-universal"' >> /start.sh && \
+    echo 'echo "  ./test-installation.sh basic  # Tests de base"' >> /start.sh && \
+    echo 'echo "  ./install.sh                 # Installation complète"' >> /start.sh && \
+    echo 'echo ""' >> /start.sh && \
+    echo 'tail -f /dev/null' >> /start.sh && \
+    chmod +x /start.sh
+
+EXPOSE 22
+
+CMD ["/start.sh"]
