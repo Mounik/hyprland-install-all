@@ -201,7 +201,7 @@ unified_install() {
         # Pour les autres distributions
         case $DISTRO_FAMILY in
             "debian")
-                sudo apt install -y "${packages[@]}" >> "$LOG" 2>&1 &
+                sudo apt-get install -y "${packages[@]}" >> "$LOG" 2>&1 &
                 ;;
             "redhat")
                 sudo dnf install -y "${packages[@]}" >> "$LOG" 2>&1 &

@@ -104,7 +104,7 @@ install_package() {
             sudo pacman -S --noconfirm "$package" >> "$LOG" 2>&1 &
             ;;
         "ubuntu"|"debian"|"pop")
-            sudo apt install -y "$package" >> "$LOG" 2>&1 &
+            sudo apt-get install -y "$package" >> "$LOG" 2>&1 &
             ;;
         "fedora"|"centos"|"rhel")
             sudo dnf install -y "$package" >> "$LOG" 2>&1 &
@@ -253,7 +253,7 @@ update_repositories() {
             sudo pacman -Sy >> "$LOG" 2>&1
             ;;
         "ubuntu"|"debian"|"pop")
-            sudo apt update >> "$LOG" 2>&1
+            sudo apt-get update >> "$LOG" 2>&1
             ;;
         "fedora"|"centos"|"rhel")
             sudo dnf check-update >> "$LOG" 2>&1 || true

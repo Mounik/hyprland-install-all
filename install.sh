@@ -127,7 +127,8 @@ echo "${INFO} Redémarrez votre session et sélectionnez Hyprland"
 echo "${INFO} Appuyez sur Super + K pour voir tous les raccourcis"
 
 # Proposer un redémarrage
-read -p "Voulez-vous redémarrer maintenant? (y/N): " -n 1 -r
+echo "Voulez-vous redémarrer maintenant? (y/N): "
+read -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo "${NOTE} Redémarrage du système..."

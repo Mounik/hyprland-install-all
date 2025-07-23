@@ -24,6 +24,8 @@ case $DISTRO_FAMILY in
             "fonts-noto-color-emoji"
             "fonts-font-awesome"
         )
+        # Note: Les paquets Debian n'incluent pas les Nerd Fonts complètes
+        # Elles seront installées manuellement si nécessaire
         ;;
     "redhat")
         font_packages=(
@@ -98,11 +100,26 @@ install_nerd_fonts_manual() {
 
 # Vérifier si les Nerd Fonts sont installées
 check_nerd_fonts() {
-    if fc-list | grep -i "nerd\|jetbrains mono" > /dev/null; then
-        echo "${OK} Nerd Fonts détectées dans le système" | tee -a "$LOG"
+    local required_fonts=(
+        "JetBrains Mono"
+        "Nerd Font"
+        "Font Awesome"
+        "Noto"
+    )
+    
+    local missing_fonts=()
+    
+    for font in "${required_fonts[@]}"; do
+        if ! fc-list | grep -i "$font" > /dev/null; then
+            missing_fonts+=("$font")
+        fi
+    done
+    
+    if [[ ${#missing_fonts[@]} -eq 0 ]]; then
+        echo "${OK} Toutes les polices requises sont installées" | tee -a "$LOG"
         return 0
     else
-        echo "${NOTE} Nerd Fonts non détectées, installation manuelle..." | tee -a "$LOG"
+        echo "${WARN} Polices manquantes: ${missing_fonts[*]}" | tee -a "$LOG"
         return 1
     fi
 }
@@ -114,17 +131,23 @@ if ! check_nerd_fonts; then
             # Utiliser AUR si disponible
             if [[ -n "$AUR_HELPER" ]]; then
                 echo "${NOTE} Installation des Nerd Fonts via AUR..." | tee -a "$LOG"
-                $AUR_HELPER -S --noconfirm nerd-fonts-complete >> "$LOG" 2>&1 || \
-                install_nerd_fonts_manual
-            else
-                install_nerd_fonts_manual
+                $AUR_HELPER -S --noconfirm ttf-jetbrains-mono-nerd ttf-hack-nerd ttf-fira-code-nerd >> "$LOG" 2>&1
             fi
+            # Toujours tenter l'installation manuelle pour s'assurer que tout est présent
+            install_nerd_fonts_manual
             ;;
         *)
             # Installation manuelle pour les autres distributions
             install_nerd_fonts_manual
             ;;
     esac
+    
+    # Vérification finale
+    if check_nerd_fonts; then
+        echo "${OK} Installation des polices terminée avec succès" | tee -a "$LOG"
+    else
+        echo "${WARN} Certaines polices peuvent encore manquer" | tee -a "$LOG"
+    fi
 fi
 
 # Configuration des polices système

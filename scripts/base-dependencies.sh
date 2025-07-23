@@ -108,7 +108,7 @@ if [ ${#failed_packages[@]} -gt 0 ]; then
                 sudo pacman -S --noconfirm "$package" >> "$LOG" 2>&1 || echo "${WARN} $package toujours en échec" | tee -a "$LOG"
                 ;;
             "debian")
-                sudo apt install -y "$package" >> "$LOG" 2>&1 || echo "${WARN} $package toujours en échec" | tee -a "$LOG"
+                sudo apt-get install -y "$package" >> "$LOG" 2>&1 || echo "${WARN} $package toujours en échec" | tee -a "$LOG"
                 ;;
             "redhat")
                 sudo dnf install -y "$package" >> "$LOG" 2>&1 || echo "${WARN} $package toujours en échec" | tee -a "$LOG"
@@ -142,7 +142,7 @@ case $DISTRO_FAMILY in
         if ! grep -q "^deb-src" /etc/apt/sources.list; then
             echo "${NOTE} Activation des sources deb-src..." | tee -a "$LOG"
             sudo sed -i 's/^# deb-src/deb-src/' /etc/apt/sources.list
-            sudo apt update >> "$LOG" 2>&1
+            sudo apt-get update >> "$LOG" 2>&1
         fi
         ;;
 esac
@@ -169,9 +169,52 @@ if ! command -v tofu &>/dev/null; then
                 $AUR_HELPER -S --noconfirm opentofu-bin >> "$LOG" 2>&1
             fi
             ;;
+        "debian")
+            # Installation via dépôt APT officiel OpenTofu
+            if ! grep -q "packages.opentofu.org" /etc/apt/sources.list.d/opentofu.list 2>/dev/null; then
+                echo "${NOTE} Configuration du dépôt OpenTofu..." | tee -a "$LOG"
+                curl -fsSL https://packages.opentofu.org/opentofu/tofu/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/opentofu.gpg >> "$LOG" 2>&1
+                echo "deb [signed-by=/usr/share/keyrings/opentofu.gpg] https://packages.opentofu.org/opentofu/tofu/any/ any main" | sudo tee /etc/apt/sources.list.d/opentofu.list >> "$LOG" 2>&1
+                sudo apt-get update >> "$LOG" 2>&1
+            fi
+            sudo apt-get install -y tofu >> "$LOG" 2>&1
+            ;;
+        "redhat")
+            # Installation via dépôt YUM/DNF officiel OpenTofu
+            if [[ ! -f /etc/yum.repos.d/opentofu.repo ]]; then
+                echo "${NOTE} Configuration du dépôt OpenTofu..." | tee -a "$LOG"
+                sudo tee /etc/yum.repos.d/opentofu.repo >> "$LOG" 2>&1 << 'EOF'
+[opentofu]
+name=OpenTofu repository
+baseurl=https://packages.opentofu.org/opentofu/tofu/rpm/
+enabled=1
+gpgcheck=1
+gpgkey=https://packages.opentofu.org/opentofu/tofu/gpgkey
+EOF
+            fi
+            sudo dnf install -y tofu >> "$LOG" 2>&1
+            ;;
+        "suse")
+            # Installation manuelle pour openSUSE
+            echo "${NOTE} Installation manuelle d'OpenTofu pour openSUSE..." | tee -a "$LOG"
+            TOFU_VERSION=$(curl -s https://api.github.com/repos/opentofu/opentofu/releases/latest | grep -o '"tag_name": "v[^"]*' | grep -o 'v[^"]*')
+            if [[ -n "$TOFU_VERSION" ]]; then
+                wget -q "https://github.com/opentofu/opentofu/releases/download/${TOFU_VERSION}/tofu_${TOFU_VERSION#v}_linux_amd64.zip" -O /tmp/tofu.zip >> "$LOG" 2>&1
+                sudo unzip /tmp/tofu.zip -d /usr/local/bin/ >> "$LOG" 2>&1
+                sudo chmod +x /usr/local/bin/tofu >> "$LOG" 2>&1
+                rm -f /tmp/tofu.zip >> "$LOG" 2>&1
+            fi
+            ;;
         *)
-            # Installation via script officiel
-            curl -fsSL https://get.opentofu.org/install-opentofu.sh | sudo bash >> "$LOG" 2>&1
+            # Fallback: Installation manuelle via GitHub releases
+            echo "${NOTE} Installation manuelle d'OpenTofu..." | tee -a "$LOG"
+            TOFU_VERSION=$(curl -s https://api.github.com/repos/opentofu/opentofu/releases/latest | grep -o '"tag_name": "v[^"]*' | grep -o 'v[^"]*')
+            if [[ -n "$TOFU_VERSION" ]]; then
+                wget -q "https://github.com/opentofu/opentofu/releases/download/${TOFU_VERSION}/tofu_${TOFU_VERSION#v}_linux_amd64.zip" -O /tmp/tofu.zip >> "$LOG" 2>&1
+                sudo unzip /tmp/tofu.zip -d /usr/local/bin/ >> "$LOG" 2>&1
+                sudo chmod +x /usr/local/bin/tofu >> "$LOG" 2>&1
+                rm -f /tmp/tofu.zip >> "$LOG" 2>&1
+            fi
             ;;
     esac
     

@@ -25,7 +25,9 @@ remove_pulseaudio() {
     for package in "${pulseaudio_packages[@]}"; do
         if is_package_installed "$package"; then
             echo "${NOTE} PulseAudio détecté: $package" | tee -a "$LOG"
-            read -p "Voulez-vous supprimer PulseAudio pour installer Pipewire? [Y/n]: " -n 1 -r
+            # Afficher la question directement à l'utilisateur sans logging
+            echo "Voulez-vous supprimer PulseAudio pour installer Pipewire? [Y/n]: "
+            read -n 1 -r
             echo
             if [[ ! $REPLY =~ ^[Nn]$ ]]; then
                 echo "${NOTE} Suppression de $package..." | tee -a "$LOG"
@@ -169,17 +171,56 @@ install_audio_codecs() {
 setup_audio_controls() {
     echo "${NOTE} Configuration des contrôles audio..." | tee -a "$LOG"
     
-    # Vérifier si les contrôles audio fonctionnent
+    # Installer pamixer s'il n'est pas disponible
+    if ! command -v pamixer &>/dev/null; then
+        echo "${NOTE} Installation de pamixer..." | tee -a "$LOG"
+        case $DISTRO_FAMILY in
+            "arch")
+                sudo pacman -S --noconfirm pamixer >> "$LOG" 2>&1 || \
+                    [[ -n "$AUR_HELPER" ]] && $AUR_HELPER -S --noconfirm pamixer >> "$LOG" 2>&1
+                ;;
+            "debian")
+                sudo apt-get install -y pamixer >> "$LOG" 2>&1
+                ;;
+            "redhat")
+                sudo dnf install -y pamixer >> "$LOG" 2>&1
+                ;;
+            "suse")
+                sudo zypper install -y pamixer >> "$LOG" 2>&1
+                ;;
+        esac
+    fi
+    
+    # Installer pactl (pulseaudio-utils) s'il n'est pas disponible
+    if ! command -v pactl &>/dev/null; then
+        echo "${NOTE} Installation de pactl (PulseAudio utils)..." | tee -a "$LOG"
+        case $DISTRO_FAMILY in
+            "arch")
+                sudo pacman -S --noconfirm libpulse >> "$LOG" 2>&1
+                ;;
+            "debian")
+                sudo apt-get install -y pulseaudio-utils >> "$LOG" 2>&1
+                ;;
+            "redhat")
+                sudo dnf install -y pulseaudio-utils >> "$LOG" 2>&1
+                ;;
+            "suse")
+                sudo zypper install -y pulseaudio-utils >> "$LOG" 2>&1
+                ;;
+        esac
+    fi
+    
+    # Vérifier si les contrôles audio fonctionnent maintenant
     if command -v pamixer &>/dev/null; then
         echo "${OK} pamixer disponible pour les contrôles audio" | tee -a "$LOG"
     else
-        echo "${WARN} pamixer non disponible" | tee -a "$LOG"
+        echo "${WARN} pamixer non disponible après tentative d'installation" | tee -a "$LOG"
     fi
     
     if command -v pactl &>/dev/null; then
         echo "${OK} pactl disponible pour les contrôles audio" | tee -a "$LOG"
     else
-        echo "${WARN} pactl non disponible" | tee -a "$LOG"
+        echo "${WARN} pactl non disponible après tentative d'installation" | tee -a "$LOG"
     fi
 }
 

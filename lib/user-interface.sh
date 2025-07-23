@@ -13,13 +13,16 @@ INSTALL_APPS="true"
 # Fonction pour afficher le menu principal
 show_main_menu() {
     echo ""
-    echo "╔══════════════════════════════════════════════════════════════╗"
-    echo "║                 HYPRLAND UNIVERSAL INSTALLER                 ║"
-    echo "╠══════════════════════════════════════════════════════════════╣"
-    echo "║ Distribution détectée: $DISTRO_NAME                            "
-    echo "║ Version: $DISTRO_VERSION                                      "
-    echo "╚══════════════════════════════════════════════════════════════╝"
-    echo ""
+    # Forcer l'affichage sur stdout sans logging
+    {
+        echo "╔══════════════════════════════════════════════════════════════╗"
+        echo "║                 HYPRLAND UNIVERSAL INSTALLER                 ║"
+        echo "╠══════════════════════════════════════════════════════════════╣"
+        echo "║ Distribution détectée: $DISTRO_NAME                            "
+        echo "║ Version: $DISTRO_VERSION                                      "
+        echo "╚══════════════════════════════════════════════════════════════╝"
+        echo ""
+    } >&1
     
     # Vérifier si whiptail est disponible
     if command -v whiptail &>/dev/null; then
@@ -37,7 +40,7 @@ show_whiptail_menu() {
         echo "${NOTE} Installation de whiptail pour l'interface..."
         case $DISTRO_FAMILY in
             "arch") sudo pacman -S --noconfirm libnewt ;;
-            "debian") sudo apt install -y whiptail ;;
+            "debian") sudo apt-get install -y whiptail ;;
             "redhat") sudo dnf install -y newt ;;
             "suse") sudo zypper in -y newt ;;
         esac
@@ -96,8 +99,13 @@ show_text_menu() {
         echo "${INFO} GPU NVIDIA détecté, configuration automatique activée"
     fi
     
-    echo "Appuyez sur Entrée pour une installation complète avec les paramètres par défaut,"
-    echo "ou tapez 'custom' pour une sélection personnalisée:"
+    # Forcer l'affichage direct à l'utilisateur
+    {
+        echo "Appuyez sur Entrée pour une installation complète avec les paramètres par défaut,"
+        echo "ou tapez 'custom' pour une sélection personnalisée:"
+        echo ""
+        printf "> "
+    } >&1
     
     read -r choice
     
@@ -132,7 +140,9 @@ ask_yes_no() {
         local prompt="$question [y/N]: "
     fi
     
-    read -p "$prompt" -n 1 -r response
+    # Afficher directement sans logging
+    echo "$prompt"
+    read -n 1 -r response
     echo
     
     case $response in
@@ -299,7 +309,9 @@ show_confirmation_menu() {
     echo "╚══════════════════════════════════════════════════════════════╝"
     echo ""
     
-    read -p "Continuer avec cette configuration? [Y/n]: " -n 1 -r
+    # Afficher la question directement sans logging
+    echo "Continuer avec cette configuration? [Y/n]: "
+    read -n 1 -r
     echo
     
     if [[ ! $REPLY =~ ^[Nn]$ ]]; then

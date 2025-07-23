@@ -110,7 +110,7 @@ get_distro_info() {
         "update_command")
             case $DISTRO_FAMILY in
                 "arch") echo "sudo pacman -Sy" ;;
-                "debian") echo "sudo apt update" ;;
+                "debian") echo "sudo apt-get update" ;;
                 "redhat") echo "sudo dnf check-update" ;;
                 "suse") echo "sudo zypper refresh" ;;
             esac
@@ -118,7 +118,7 @@ get_distro_info() {
         "install_command")
             case $DISTRO_FAMILY in
                 "arch") echo "sudo pacman -S --noconfirm" ;;
-                "debian") echo "sudo apt install -y" ;;
+                "debian") echo "sudo apt-get install -y" ;;
                 "redhat") echo "sudo dnf install -y" ;;
                 "suse") echo "sudo zypper in -y" ;;
             esac
