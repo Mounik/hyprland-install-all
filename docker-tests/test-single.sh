@@ -25,17 +25,12 @@ TEST_TYPE=${2:-basic}
 echo "🧪 Test rapide - $DISTRO ($TEST_TYPE)"
 
 # Construire et exécuter
-docker build -t "hyprland-test-$DISTRO" "$SCRIPT_DIR/$DISTRO" --build-context default="$HYPRLAND_DIR"
+cd "$HYPRLAND_DIR"
+docker build -t "hyprland-test-$DISTRO" -f "$SCRIPT_DIR/$DISTRO/Dockerfile" .
 
 echo "▶️  Exécution du test..."
 docker run --rm \
-    -v "$HYPRLAND_DIR:/tmp/hyprland-universal:ro" \
     "hyprland-test-$DISTRO" \
-    bash -c "
-        cp -r /tmp/hyprland-universal/* /home/testuser/hyprland-universal/ && \
-        chown -R testuser:testuser /home/testuser/hyprland-universal && \
-        chmod +x /home/testuser/hyprland-universal/test-installation.sh && \
-        su testuser -c 'cd /home/testuser/hyprland-universal && ./test-installation.sh $TEST_TYPE'
-    "
+    bash -c "sudo -u testuser bash -c 'cd /home/testuser/hyprland-universal && ./test-installation.sh $TEST_TYPE'"
 
 echo "✅ Test terminé pour $DISTRO"

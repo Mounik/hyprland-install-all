@@ -20,10 +20,7 @@ RUN apt update && apt upgrade -y && \
     vim \
     procps
 
-# Activer les sources deb-src
-RUN sed -i 's/^deb /deb-src /g' /etc/apt/sources.list && \
-    echo "deb-src http://deb.debian.org/debian bookworm main" >> /etc/apt/sources.list && \
-    apt update
+# Sources déjà configurées dans Debian 12
 
 # Créer un utilisateur non-root
 RUN useradd -m -G sudo -s /bin/bash testuser && \

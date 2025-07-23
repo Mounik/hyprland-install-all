@@ -22,6 +22,7 @@ detect_distribution() {
         DISTRO_NAME="Ubuntu (Test Environment)"
         DISTRO_VERSION="22.04"
         DISTRO_CODENAME="jammy"
+        DISTRO_FAMILY="debian"  # Définir la famille pour le fallback
     fi
     
     # Normaliser certains IDs de distribution
