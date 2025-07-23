@@ -1,5 +1,5 @@
 # Dockerfile pour tester Hyprland Universal sur Ubuntu
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 # Éviter les interactions pendant l'installation
 ENV DEBIAN_FRONTEND=noninteractive
