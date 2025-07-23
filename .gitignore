@@ -264,7 +264,7 @@ site/
 # Keep essential structure files
 !.gitkeep
 !README.md
-!CLAUDE.md
+!FAQ.md
 !LICENSE
 
 # Keep example configurations but ignore user modifications

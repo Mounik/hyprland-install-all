@@ -67,6 +67,7 @@ chmod +x install.sh
 | `Super + D` | Docker (LazyDocker) |
 | `Super + N` | Neovim |
 
+[Voir tous les raccourcis](./FAQ.md#raccourcis-clavier-personnalisés)
 
 ### 🔧 Aliases Intelligents
 
