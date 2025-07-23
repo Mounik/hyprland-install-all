@@ -126,7 +126,8 @@ case $DISTRO_FAMILY in
         # Vérifier PulseAudio (doit être désinstallé)
         if pacman -Qq | grep -qw '^pulseaudio$'; then
             echo "${ERROR} PulseAudio détecté. Il doit être désinstallé avant d'installer Pipewire." | tee -a "$LOG"
-            read -p "Voulez-vous désinstaller PulseAudio maintenant? (y/N): " -n 1 -r
+            echo "Voulez-vous désinstaller PulseAudio maintenant? (y/N): "
+            read -n 1 -r
             echo
             if [[ $REPLY =~ ^[Yy]$ ]]; then
                 sudo pacman -Rns --noconfirm pulseaudio >> "$LOG" 2>&1
@@ -160,29 +161,71 @@ if ! command -v uv &>/dev/null; then
     fi
 fi
 
-# Installation de OpenTofu (remplacement Terraform)
-echo "${NOTE} Installation d'OpenTofu..." | tee -a "$LOG"
-if ! command -v tofu &>/dev/null; then
+# Installation d'OpenTofu (Infrastructure as Code)
+install_opentofu() {
+    echo "${NOTE} Installation d'OpenTofu..." | tee -a "$LOG"
+    
+    if command -v tofu &>/dev/null; then
+        echo "${OK} OpenTofu déjà installé: $(tofu version | head -1)" | tee -a "$LOG"
+        return 0
+    fi
+    
+    # Méthode 1: Script officiel universel (recommandé)
+    echo "${NOTE} Utilisation du script d'installation officiel OpenTofu..." | tee -a "$LOG"
+    
+    local temp_dir=$(mktemp -d)
+    cd "$temp_dir"
+    
+    # Télécharger le script officiel
+    if curl --proto '=https' --tlsv1.2 -fsSL https://get.opentofu.org/install-opentofu.sh -o install-opentofu.sh >> "$LOG" 2>&1; then
+        chmod +x install-opentofu.sh
+        
+        # Exécuter l'installation en mode standalone (pas besoin de cosign)
+        if ./install-opentofu.sh --install-method standalone --skip-verify >> "$LOG" 2>&1; then
+            echo "${OK} OpenTofu installé via script officiel" | tee -a "$LOG"
+            cd - > /dev/null
+            rm -rf "$temp_dir"
+            return 0
+        else
+            echo "${WARN} Échec du script officiel, tentative méthode alternative..." | tee -a "$LOG"
+        fi
+    fi
+    
+    # Méthode 2: Gestionnaires de paquets spécifiques (fallback)
+    echo "${NOTE} Utilisation des méthodes alternatives..." | tee -a "$LOG"
+    
     case $DISTRO_FAMILY in
         "arch")
             if [[ -n "$AUR_HELPER" ]]; then
+                echo "${NOTE} Installation via AUR..." | tee -a "$LOG"
                 $AUR_HELPER -S --noconfirm opentofu-bin >> "$LOG" 2>&1
             fi
             ;;
         "debian")
-            # Installation via dépôt APT officiel OpenTofu
-            if ! grep -q "packages.opentofu.org" /etc/apt/sources.list.d/opentofu.list 2>/dev/null; then
-                echo "${NOTE} Configuration du dépôt OpenTofu..." | tee -a "$LOG"
-                curl -fsSL https://packages.opentofu.org/opentofu/tofu/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/opentofu.gpg >> "$LOG" 2>&1
-                echo "deb [signed-by=/usr/share/keyrings/opentofu.gpg] https://packages.opentofu.org/opentofu/tofu/any/ any main" | sudo tee /etc/apt/sources.list.d/opentofu.list >> "$LOG" 2>&1
-                sudo apt-get update >> "$LOG" 2>&1
+            # Snap pour Ubuntu/Debian si disponible
+            if command -v snap &>/dev/null; then
+                echo "${NOTE} Installation via Snap..." | tee -a "$LOG"
+                sudo snap install --classic opentofu >> "$LOG" 2>&1
+                
+                # Créer un lien symbolique pour compatibilité
+                if [[ ! -f /usr/local/bin/tofu ]] && [[ -f /snap/bin/tofu ]]; then
+                    sudo ln -sf /snap/bin/tofu /usr/local/bin/tofu 2>/dev/null || true
+                fi
+            else
+                # Repository APT officiel
+                echo "${NOTE} Installation via repository APT..." | tee -a "$LOG"
+                if ! grep -q "packages.opentofu.org" /etc/apt/sources.list.d/opentofu.list 2>/dev/null; then
+                    curl -fsSL https://packages.opentofu.org/opentofu/tofu/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/opentofu.gpg >> "$LOG" 2>&1
+                    echo "deb [signed-by=/usr/share/keyrings/opentofu.gpg] https://packages.opentofu.org/opentofu/tofu/any/ any main" | sudo tee /etc/apt/sources.list.d/opentofu.list >> "$LOG" 2>&1
+                    sudo apt-get update >> "$LOG" 2>&1
+                fi
+                sudo apt-get install -y tofu >> "$LOG" 2>&1
             fi
-            sudo apt-get install -y tofu >> "$LOG" 2>&1
             ;;
         "redhat")
-            # Installation via dépôt YUM/DNF officiel OpenTofu
+            # Repository YUM/DNF officiel
+            echo "${NOTE} Installation via repository DNF..." | tee -a "$LOG"
             if [[ ! -f /etc/yum.repos.d/opentofu.repo ]]; then
-                echo "${NOTE} Configuration du dépôt OpenTofu..." | tee -a "$LOG"
                 sudo tee /etc/yum.repos.d/opentofu.repo >> "$LOG" 2>&1 << 'EOF'
 [opentofu]
 name=OpenTofu repository
@@ -195,34 +238,64 @@ EOF
             sudo dnf install -y tofu >> "$LOG" 2>&1
             ;;
         "suse")
-            # Installation manuelle pour openSUSE
-            echo "${NOTE} Installation manuelle d'OpenTofu pour openSUSE..." | tee -a "$LOG"
-            TOFU_VERSION=$(curl -s https://api.github.com/repos/opentofu/opentofu/releases/latest | grep -o '"tag_name": "v[^"]*' | grep -o 'v[^"]*')
-            if [[ -n "$TOFU_VERSION" ]]; then
-                wget -q "https://github.com/opentofu/opentofu/releases/download/${TOFU_VERSION}/tofu_${TOFU_VERSION#v}_linux_amd64.zip" -O /tmp/tofu.zip >> "$LOG" 2>&1
-                sudo unzip /tmp/tofu.zip -d /usr/local/bin/ >> "$LOG" 2>&1
-                sudo chmod +x /usr/local/bin/tofu >> "$LOG" 2>&1
-                rm -f /tmp/tofu.zip >> "$LOG" 2>&1
-            fi
+            # Installation manuelle GitHub releases
+            echo "${NOTE} Installation manuelle via GitHub releases..." | tee -a "$LOG"
+            install_opentofu_manual
             ;;
         *)
-            # Fallback: Installation manuelle via GitHub releases
-            echo "${NOTE} Installation manuelle d'OpenTofu..." | tee -a "$LOG"
-            TOFU_VERSION=$(curl -s https://api.github.com/repos/opentofu/opentofu/releases/latest | grep -o '"tag_name": "v[^"]*' | grep -o 'v[^"]*')
-            if [[ -n "$TOFU_VERSION" ]]; then
-                wget -q "https://github.com/opentofu/opentofu/releases/download/${TOFU_VERSION}/tofu_${TOFU_VERSION#v}_linux_amd64.zip" -O /tmp/tofu.zip >> "$LOG" 2>&1
-                sudo unzip /tmp/tofu.zip -d /usr/local/bin/ >> "$LOG" 2>&1
-                sudo chmod +x /usr/local/bin/tofu >> "$LOG" 2>&1
-                rm -f /tmp/tofu.zip >> "$LOG" 2>&1
-            fi
+            # Fallback: Installation manuelle
+            echo "${NOTE} Installation manuelle universelle..." | tee -a "$LOG"
+            install_opentofu_manual
             ;;
     esac
     
+    cd - > /dev/null 2>&1
+    rm -rf "$temp_dir" 2>/dev/null
+    
+    # Vérification finale
     if command -v tofu &>/dev/null; then
-        echo "${OK} OpenTofu installé avec succès" | tee -a "$LOG"
+        local version=$(tofu version | head -1 2>/dev/null || echo "version inconnue")
+        echo "${OK} OpenTofu installé avec succès: $version" | tee -a "$LOG"
     else
-        echo "${WARN} Échec de l'installation d'OpenTofu" | tee -a "$LOG"
+        echo "${ERROR} Échec de l'installation d'OpenTofu" | tee -a "$LOG"
+        return 1
     fi
-fi
+}
+
+# Fonction d'installation manuelle pour cas particuliers
+install_opentofu_manual() {
+    echo "${NOTE} Installation manuelle d'OpenTofu via GitHub releases..." | tee -a "$LOG"
+    
+    # Obtenir la dernière version
+    local latest_version
+    latest_version=$(curl -s https://api.github.com/repos/opentofu/opentofu/releases/latest | grep -o '"tag_name": "v[^"]*' | grep -o 'v[^"]*' 2>/dev/null)
+    
+    if [[ -z "$latest_version" ]]; then
+        echo "${ERROR} Impossible de récupérer la version d'OpenTofu" | tee -a "$LOG"
+        return 1
+    fi
+    
+    local download_url="https://github.com/opentofu/opentofu/releases/download/${latest_version}/tofu_${latest_version#v}_linux_amd64.zip"
+    local temp_file="/tmp/tofu_${latest_version}.zip"
+    
+    # Télécharger
+    if wget -q "$download_url" -O "$temp_file" >> "$LOG" 2>&1; then
+        # Extraire et installer
+        cd /tmp
+        unzip -q "$temp_file" >> "$LOG" 2>&1
+        sudo mv tofu /usr/local/bin/ >> "$LOG" 2>&1
+        sudo chmod +x /usr/local/bin/tofu >> "$LOG" 2>&1
+        rm -f "$temp_file" tofu_* >> "$LOG" 2>&1
+        
+        echo "${OK} OpenTofu $latest_version installé manuellement" | tee -a "$LOG"
+        return 0
+    else
+        echo "${ERROR} Échec du téléchargement d'OpenTofu" | tee -a "$LOG"
+        return 1
+    fi
+}
+
+# Lancer l'installation d'OpenTofu
+install_opentofu
 
 echo "${OK} Installation des dépendances de base terminée" | tee -a "$LOG"
