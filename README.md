@@ -1,6 +1,7 @@
 # 🚀 Hyprland Universal Installer
 
->[WARNING]Ne fonctionne pas pour le moment. En cours de développement
+> [!WARNING]
+> Ne fonctionne pas pour le moment. En cours de développement
 
 **Installation unifiée de Hyprland sur toutes les distributions Linux supportées**
 
