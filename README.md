@@ -1,5 +1,7 @@
 # 🚀 Hyprland Universal Installer
 
+>[WARNING]Ne fonctionne pas pour le moment. En cours de développement
+
 **Installation unifiée de Hyprland sur toutes les distributions Linux supportées**
 
 [![Tests](https://img.shields.io/badge/tests-Docker-blue)](./docker-tests/)
